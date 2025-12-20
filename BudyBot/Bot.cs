@@ -19,7 +19,7 @@ namespace BudyBot
 
         public Bot()
         {
-            ConnectionCredentials credentials = new ConnectionCredentials("channel", "token");
+            ConnectionCredentials credentials = new ConnectionCredentials("username", "auth");
             var clientOptions = new ClientOptions
             {
                 MessagesAllowedInPeriod = 750,
@@ -62,9 +62,12 @@ namespace BudyBot
 
         private void Client_OnMessageReceived(object sender, OnMessageReceivedArgs e)
         {
-
-            if (e.ChatMessage.Message.Contains("badword"))
-                client.TimeoutUser(e.ChatMessage.Channel, e.ChatMessage.Username, TimeSpan.FromMinutes(30), "Bad word! 30 minute timeout!");
+            if (!db.UserExists(e.ChatMessage.Username).Result)
+            {
+                client.SendMessage(e.ChatMessage.Channel, $"Welcome to the hangout, @{e.ChatMessage.Username}!");
+                Task.WaitAll(db.AddUser(e.ChatMessage.Username));
+            }
+            
         }
 
         private void Client_OnWhisperReceived(object sender, OnWhisperReceivedArgs e)
@@ -81,6 +84,6 @@ namespace BudyBot
                 client.SendMessage(e.Channel, $"Welcome {e.Subscriber.DisplayName} to the substers! You just earned 500 points!");
         }
 
-
+        
     }
 }

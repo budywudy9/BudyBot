@@ -20,6 +20,7 @@ namespace BudyBot
         {
             Bot bot = new Bot();
             DatabaseConnector db = new DatabaseConnector();
+
             Console.ReadLine();
            
         }
