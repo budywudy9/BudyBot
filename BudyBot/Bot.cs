@@ -67,7 +67,11 @@ namespace BudyBot
                 client.SendMessage(e.ChatMessage.Channel, $"Welcome to the hangout, @{e.ChatMessage.Username}!");
                 Task.WaitAll(db.AddUser(e.ChatMessage.Username));
             }
-            
+            db.IncrementMessages(e.ChatMessage.Username, e.ChatMessage.Message);
+            if (e.ChatMessage.Message.Contains("!quote"))
+                Quote(e.ChatMessage.Username, e.ChatMessage.Message.Substring(6), e.ChatMessage.Channel, e.ChatMessage.TmiSentTs);
+            if (e.ChatMessage.Message.Contains("badword"))
+                client.TimeoutUser(e.ChatMessage.Channel, e.ChatMessage.Username, TimeSpan.FromMinutes(30), "Bad word! 30 minute timeout!");
         }
 
         private void Client_OnWhisperReceived(object sender, OnWhisperReceivedArgs e)
@@ -84,6 +88,21 @@ namespace BudyBot
                 client.SendMessage(e.Channel, $"Welcome {e.Subscriber.DisplayName} to the substers! You just earned 500 points!");
         }
 
-        
+        private void Quote(string cmdUser, string command, string channel, string timestamp)
+        {
+            Regex rg = new Regex("(?<=@)[\\w+\\-=\\\\\\/\\[\\]\\(\\)\\{\\}\\!£\\$\\%\\^&\\*]{4,25} ");
+            if (!rg.IsMatch(command))
+            {
+                db.GetMessage(-1);
+                return;
+            }
+            string[] split = command.Split(" ", 3);
+            // prunes the command "!quote", the "@" before the user, and any other additional text
+            string quotedUser = split[1].Substring(split[1].Contains("@") ? 1 : 0);
+            if (split.Length == 2)
+                db.AddMessage(quotedUser, "", timestamp);
+            else if (split.Length == 3)
+                db.AddMessage(quotedUser, split[3], timestamp);
+        }
     }
 }
