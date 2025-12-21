@@ -19,7 +19,7 @@ namespace BudyBot
 
         public Bot()
         {
-            ConnectionCredentials credentials = new ConnectionCredentials("username", "auth");
+            ConnectionCredentials credentials = new ConnectionCredentials("username", "token");
             var clientOptions = new ClientOptions
             {
                 MessagesAllowedInPeriod = 750,
@@ -38,7 +38,7 @@ namespace BudyBot
 
             client.Connect();
 
-            client.JoinChannel("channel");
+            client.JoinChannel("username");
 
             db = new DatabaseConnector();
 
@@ -62,6 +62,7 @@ namespace BudyBot
 
         private void Client_OnMessageReceived(object sender, OnMessageReceivedArgs e)
         {
+            client.SendMessage(e.ChatMessage.Channel, "MESSAGE RECEIVED");
             if (!db.UserExists(e.ChatMessage.Username).Result)
             {
                 client.SendMessage(e.ChatMessage.Channel, $"Welcome to the hangout, @{e.ChatMessage.Username}!");
@@ -90,19 +91,42 @@ namespace BudyBot
 
         private void Quote(string cmdUser, string command, string channel, string timestamp)
         {
-            Regex rg = new Regex("(?<=@)[\\w+\\-=\\\\\\/\\[\\]\\(\\)\\{\\}\\!£\\$\\%\\^&\\*]{4,25} ");
+            Regex rg = new Regex("@[\\w]{4,25}");
             if (!rg.IsMatch(command))
             {
-                db.GetMessage(-1);
+                client.SendMessage(channel, $"Could not find a user in your message!");
+                Task<(string, DateTime)> msg = db.GetMessage();
+                Task.WaitAll(msg);
+                client.SendMessage(channel, $"'{msg.Result.Item1}' - random, {msg.Result.Item2:dd-MM-yyyy}");
                 return;
             }
             string[] split = command.Split(" ", 3);
-            // prunes the command "!quote", the "@" before the user, and any other additional text
-            string quotedUser = split[1].Substring(split[1].Contains("@") ? 1 : 0);
-            if (split.Length == 2)
-                db.AddMessage(quotedUser, "", timestamp);
-            else if (split.Length == 3)
-                db.AddMessage(quotedUser, split[3], timestamp);
+            
+            // prunes the "@" before the user, and any other additional text
+            string quotedUser = split[0].Substring(split[0].Contains("@") ? 1 : 0);
+            if (split.Length == 1 || split[1] == string.Empty)
+            {
+                Task<(string, DateTime)> c = db.GetMessage(quotedUser);
+                Task.WaitAll(c);
+                if (c.Result.Item1 == "")
+                {
+                    client.SendMessage(channel, $"No quotes found for {quotedUser}");
+                    return;
+                }
+                client.SendMessage(channel, $"'{c.Result.Item1}' - {quotedUser}, {c.Result.Item2:dd-MM-yyyy}");
+            }
+            else
+            {
+                client.SendMessage("budywudy9", "QUOTING GIVEN MESSAGE");
+                Task<(int, string, int)> t = db.SelectUser(quotedUser);
+                Task.WaitAll(t);
+                if (t.Result.Item1 < 1)
+                {
+                    client.SendMessage("budywudy9", "USER NOT IN DATABASE");
+                    return;
+                }
+                Task.WaitAll(db.AddMessage(quotedUser, split[1], timestamp));
+            }
         }
     }
 }
