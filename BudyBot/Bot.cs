@@ -74,13 +74,15 @@ namespace BudyBot
 
             Task.WaitAll(db.IncrementMessages(e.ChatMessage.Username, Int32.Parse(e.ChatMessage.UserId), e.ChatMessage.Message,Int64.Parse(e.ChatMessage.TmiSentTs)));
             if (e.ChatMessage.Message.Contains("!quote"))
-                Quote(e.ChatMessage.Username, e.ChatMessage.Message.Substring(6), e.ChatMessage.Channel, e.ChatMessage.TmiSentTs);
+                Commands.Quote(db, e.ChatMessage.Username, e.ChatMessage.Message.Substring(6), e.ChatMessage.Channel, e.ChatMessage.TmiSentTs);
             else if (msg.Contains("!slay"))
                 Slay();
             else if (msg.Contains("!13k"))
                 Score();
             else if (msg.Contains("!hairflip"))
                 Hair();
+            if (msg.Contains("hi im denis"))
+                client.SendMessage(e.ChatMessage.Channel, "didnt fucking ask");
 
         }
 
@@ -113,46 +115,6 @@ namespace BudyBot
             return;
         }
 
-        private void Quote(string cmdUser, string command, string channel, string timestamp)
-        {
-            Regex rg = new Regex("@[\\w]{4,25}");
-            if (!rg.IsMatch(command))
-            {
-                client.SendMessage(channel, $"Could not find a user in your message!");
-                Task<(string, DateTime)> msg = db.GetMessage();
-                Task.WaitAll(msg);
-                
-                var dt = DateTimeOffset.FromUnixTimeMilliseconds(msg.Result.Item2);
-                client.SendMessage(channel, $"'{msg.Result.Item1}' - random, {dt:dd-MM-yyyy}");
-                return;
-            }
-            string[] split = command.Split(" ", 3);
-            
-            // prunes the "@" before the user, and any other additional text
-            string quotedUser = split[0].Substring(split[0].Contains("@") ? 1 : 0);
-            if (split.Length == 1 || split[1] == string.Empty)
-            {
-                Task<(string, DateTime)> c = db.GetMessage(quotedUser);
-                Task.WaitAll(c);
-                if (c.Result.Item1 == "")
-                {
-                    client.SendMessage(channel, $"No quotes found for {quotedUser}");
-                    return;
-                }
-                client.SendMessage(channel, $"'{c.Result.Item1}' - {quotedUser}, {c.Result.Item2:dd-MM-yyyy}");
-            }
-            else
-            {
-                client.SendMessage("budywudy9", "QUOTING GIVEN MESSAGE");
-                Task<(int, string, int)> t = db.SelectUser(quotedUser);
-                Task.WaitAll(t);
-                if (t.Result.Item1 < 1)
-                {
-                    client.SendMessage("budywudy9", "USER NOT IN DATABASE");
-                    return;
-                }
-                Task.WaitAll(db.AddMessage(quotedUser, split[1], timestamp));
-            }
-        }
+        
     }
 }

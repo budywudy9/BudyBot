@@ -139,13 +139,11 @@ namespace BudyBot
             Console.WriteLine($"\nRows Affected: {RowsAffected}");
         }
 
-        public async Task<(string, DateTime)> GetMessage(string username = "")
+        public async Task<(string, long)> GetMessage(string username = "")
         {
-            if (username == "")
-                // stuff here with getting a random user
-                username = "StreamElements";
+            Random r = new Random();
             List<string> messages = new List<string>();
-            List<DateTime> times = new List<DateTime>();
+            List<long> times = new List<long>();
             await using var connection = new MySqlConnection(connectionString);
             await connection.OpenAsync();
 
@@ -181,14 +179,13 @@ namespace BudyBot
             while (await reader.ReadAsync())
             {
                 messages.Add(reader.GetString("message"));
-                times.Add(reader.GetDateTime("sent"));
+                times.Add(reader.GetInt64("sent"));
             }
             await reader.DisposeAsync();
             Console.WriteLine(messages.Count);
             if (messages.Count == 0)
-                return ("", new DateTime());
+                return ("", 0);
 
-            Random r = new Random();
             int n = r.Next(messages.Count - 1);
             return (messages[n], times[n]);
 
