@@ -57,13 +57,15 @@ namespace BudyBot
         {
             await using var connection = new MySqlConnection(connectionString);
             await connection.OpenAsync();
+
             Console.WriteLine($"New user! adding {username} to list.");
+
             string query = $"INSERT INTO user (name) VALUES (@name);";
             await using var command = new MySqlCommand(query, connection);
             command.Parameters.AddWithValue("@name", username);
             int rowsAffected = await command.ExecuteNonQueryAsync();
-            Console.WriteLine($"\nRows inserted: {rowsAffected}");
 
+            Console.WriteLine($"\nRows inserted into user: {rowsAffected}");
         }
 
         public async Task IncrementMessages(string username, int id, string message, long timestamp)
@@ -74,14 +76,6 @@ namespace BudyBot
             await using var c1 = new MySqlCommand(query, connection);
             c1.Parameters.AddWithValue("@name", username);
             await c1.ExecuteNonQueryAsync();
-
-            //int twitch_id = 0;
-            //query = $"SELECT id FROM user WHERE name = @name";
-            //await using var c2 = new MySqlCommand(query, connection);
-            //c2.Parameters.AddWithValue("@name", username);
-            //await using var reader = await c2.ExecuteReaderAsync();
-            //while (await reader.ReadAsync())
-            //    twitch_id = reader.GetInt64("twitch_id");
 
             query = $"UPDATE last_message SET message = @message, timestamp = @timestamp WHERE twitch_id = @twitch_id;";
             await using var c3 = new MySqlCommand(query, connection);
@@ -95,7 +89,6 @@ namespace BudyBot
         public async Task<(int, int, string, int)> SelectUser(string username)
         {
             Console.WriteLine("RUNNING SELECTUSER");
-            Console.WriteLine($"USERNAME: {username}");
             await using var connection = new MySqlConnection(connectionString);
             await connection.OpenAsync();
             string query = $"SELECT * FROM user WHERE name = @name;";
@@ -111,35 +104,22 @@ namespace BudyBot
             return (0, 0, "", 0);
         }
 
-        public async Task AddMessage(string username, string message, string timestamp)
+        public async Task AddMessage(string user, string message, long timestamp)
         {
-            DateTime dt2 = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-            var dt = DateTimeOffset.TryParse(timestamp, out var dto);
-            string timeSent = dto.UtcDateTime.ToString("yyyy-MM-dd HH:mm:ss");
-            int userId = SelectUser(username).Result.Item1;
 
             await using var connection = new MySqlConnection(connectionString);
             await connection.OpenAsync();
-            if (message == "")
-            {
-                string q = $"SELECT message FROM last_message WHERE id = @id";
-                await using var c2 = new MySqlCommand(q, connection);
-                c2.Parameters.AddWithValue("@id", userId);
-                await using var reader = await c2.ExecuteReaderAsync();
-                while (await reader.ReadAsync())
-                    message = reader.GetString("message");
-            }
-            Console.WriteLine($"MESSAGE = {message}");
-            Console.WriteLine($"USER ID = {userId}");
 
-            string query = $"INSERT INTO top_message (userId, message, sent) VALUES (@userId, @message, @sent);";
+            int id = SelectUser(user).Result.Item2;
+
+            string query = $"INSERT INTO top_message (twitch_id, message, timestamp) VALUES (@twitch_id, @message, @timestamp);";
             await using var command = new MySqlCommand(query, connection);
-            command.Parameters.AddWithValue("@userId", userId);
+            command.Parameters.AddWithValue("@twitch_id", id);
             command.Parameters.AddWithValue("@message", message);
-            command.Parameters.AddWithValue("@sent", timeSent);
+            command.Parameters.AddWithValue("@sent", timestamp);
 
             int RowsAffected = await command.ExecuteNonQueryAsync();
-            Console.WriteLine($"\nRows Affected: {RowsAffected}");
+            Console.WriteLine($"\nRows Affected in top_message: {RowsAffected}");
         }
 
         public async Task<(string, long)> GetMessage(string username = "")
@@ -147,13 +127,13 @@ namespace BudyBot
             Random r = new Random();
             List<string> messages = new List<string>();
             List<long> times = new List<long>();
+
             await using var connection = new MySqlConnection(connectionString);
             await connection.OpenAsync();
 
             if (username == "")
             {
-                //List<(int, string, int)> users = SelectAll().Result;
-                //username = users[r.Next(users.Count - 1)].Item2;              
+                // Selects random user 
                 List<string> users = new List<string>();
                 string q3 = $"SELECT name FROM user INNER JOIN top_message ON top_message.twitch_id = user.twitch_id GROUP BY name";
                 await using var c3 = new MySqlCommand(q3, connection);
@@ -165,35 +145,23 @@ namespace BudyBot
                 username = users[r.Next(users.Count - 1)];
             }
 
-
-
-            // gets user_id for user
-            string q2 = $"SELECT twitch_id FROM user WHERE name = @name;";
-            await using var c2 = new MySqlCommand(q2, connection);
-            c2.Parameters.AddWithValue("@name", username);
-            await using var r2 = await c2.ExecuteReaderAsync();
-            int id = 0;
-            while (await r2.ReadAsync())
-                id = r2.GetInt32("id");
-            await r2.DisposeAsync();
-            Console.WriteLine($"USER ID: {id}");
-            string query = $"SELECT message, sent FROM top_message WHERE userid = @id;";
+            int id = SelectUser(username).Result.Item2;
+            string query = $"SELECT message, timestamp FROM top_message WHERE twitch_id = @twitch_id;";
             await using var command = new MySqlCommand(query, connection);
-            command.Parameters.AddWithValue("@id", id);
+            command.Parameters.AddWithValue("@twitch_id", id);
             await using var reader = await command.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
                 messages.Add(reader.GetString("message"));
-                times.Add(reader.GetInt64("sent"));
+                times.Add(reader.GetInt64("timestamp"));
             }
             await reader.DisposeAsync();
-            Console.WriteLine(messages.Count);
+
             if (messages.Count == 0)
                 return ("", 0);
 
             int n = r.Next(messages.Count - 1);
             return (messages[n], times[n]);
-
         }
 
     }
