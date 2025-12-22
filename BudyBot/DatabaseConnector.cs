@@ -3,12 +3,15 @@ using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.Extensions.Configuration;
 
 namespace BudyBot
 {
     internal class DatabaseConnector
     {
         string connectionString;
+        ConfigurationBuilder builder;
+        IConfiguration configuration;
 
         public DatabaseConnector()
         {
@@ -157,6 +160,8 @@ namespace BudyBot
                 await using var r3 = await c3.ExecuteReaderAsync();
                 while (await r3.ReadAsync())
                     users.Add(r3.GetString("name"));
+                if (users.Count < 1)
+                    return ("", 0);
                 username = users[r.Next(users.Count - 1)];
             }
 

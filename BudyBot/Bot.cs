@@ -11,6 +11,7 @@ using TwitchLib.Client.Extensions;
 using TwitchLib.Client.Models;
 using TwitchLib.Communication.Clients;
 using TwitchLib.Communication.Models;
+using Microsoft.Extensions.Configuration;
 
 namespace BudyBot
 {
@@ -18,10 +19,14 @@ namespace BudyBot
     {
         TwitchClient client;
         DatabaseConnector db;
+        ConfigurationBuilder builder;
+        IConfiguration configuration; 
 
         public Bot()
         {
-            ConnectionCredentials credentials = new ConnectionCredentials("username", "token");
+            builder = new ConfigurationBuilder();
+            configuration = builder.AddUserSecrets<Bot>().Build();
+            ConnectionCredentials credentials = new ConnectionCredentials(configuration.GetSection("twitch")["username"], configuration.GetSection("twitch")["access_token"]);
             var clientOptions = new ClientOptions
             {
                 MessagesAllowedInPeriod = 750,
@@ -40,7 +45,7 @@ namespace BudyBot
 
             client.Connect();
 
-            client.JoinChannel("username");
+            client.JoinChannel(configuration.GetSection("twitch")["username"]);
 
             db = new DatabaseConnector();
 
@@ -64,7 +69,6 @@ namespace BudyBot
 
         private void Client_OnMessageReceived(object sender, OnMessageReceivedArgs e)
         {
-            client.SendMessage(e.ChatMessage.Channel, "MESSAGE RECEIVED");
             if (!db.UserExists(e.ChatMessage.Username).Result)
             {
                 client.SendMessage(e.ChatMessage.Channel, $"Welcome to the hangout, @{e.ChatMessage.Username}!");
@@ -74,7 +78,7 @@ namespace BudyBot
 
             Task.WaitAll(db.IncrementMessages(e.ChatMessage.Username, Int32.Parse(e.ChatMessage.UserId), e.ChatMessage.Message,Int64.Parse(e.ChatMessage.TmiSentTs)));
             if (e.ChatMessage.Message.Contains("!quote"))
-                Commands.Quote(db, e.ChatMessage.Username, e.ChatMessage.Message.Substring(6), e.ChatMessage.Channel, e.ChatMessage.TmiSentTs);
+                client.SendMessage(e.ChatMessage.Channel, Commands.Quote(db, e.ChatMessage.Username, e.ChatMessage.Message.Substring(6), e.ChatMessage.Channel, e.ChatMessage.TmiSentTs));
             else if (msg.Contains("!slay"))
                 Slay();
             else if (msg.Contains("!13k"))
