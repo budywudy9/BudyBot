@@ -1,5 +1,7 @@
-﻿using System;
+﻿using Microsoft.VisualBasic;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.Text;
 using System.Text.RegularExpressions;
 using TwitchLib.Client;
@@ -68,11 +70,18 @@ namespace BudyBot
                 client.SendMessage(e.ChatMessage.Channel, $"Welcome to the hangout, @{e.ChatMessage.Username}!");
                 Task.WaitAll(db.AddUser(e.ChatMessage.Username));
             }
-            db.IncrementMessages(e.ChatMessage.Username, e.ChatMessage.Message);
+            string msg = e.ChatMessage.Message;
+
+            Task.WaitAll(db.IncrementMessages(e.ChatMessage.Username, Int32.Parse(e.ChatMessage.UserId), e.ChatMessage.Message,Int64.Parse(e.ChatMessage.TmiSentTs)));
             if (e.ChatMessage.Message.Contains("!quote"))
                 Quote(e.ChatMessage.Username, e.ChatMessage.Message.Substring(6), e.ChatMessage.Channel, e.ChatMessage.TmiSentTs);
-            if (e.ChatMessage.Message.Contains("badword"))
-                client.TimeoutUser(e.ChatMessage.Channel, e.ChatMessage.Username, TimeSpan.FromMinutes(30), "Bad word! 30 minute timeout!");
+            else if (msg.Contains("!slay"))
+                Slay();
+            else if (msg.Contains("!13k"))
+                Score();
+            else if (msg.Contains("!hairflip"))
+                Hair();
+
         }
 
         private void Client_OnWhisperReceived(object sender, OnWhisperReceivedArgs e)
@@ -89,6 +98,21 @@ namespace BudyBot
                 client.SendMessage(e.Channel, $"Welcome {e.Subscriber.DisplayName} to the substers! You just earned 500 points!");
         }
 
+        private void Slay()
+        {
+            return;
+        }
+
+        private void Score()
+        {
+            return;
+        }
+
+        private void Hair()
+        {
+            return;
+        }
+
         private void Quote(string cmdUser, string command, string channel, string timestamp)
         {
             Regex rg = new Regex("@[\\w]{4,25}");
@@ -97,7 +121,9 @@ namespace BudyBot
                 client.SendMessage(channel, $"Could not find a user in your message!");
                 Task<(string, DateTime)> msg = db.GetMessage();
                 Task.WaitAll(msg);
-                client.SendMessage(channel, $"'{msg.Result.Item1}' - random, {msg.Result.Item2:dd-MM-yyyy}");
+                
+                var dt = DateTimeOffset.FromUnixTimeMilliseconds(msg.Result.Item2);
+                client.SendMessage(channel, $"'{msg.Result.Item1}' - random, {dt:dd-MM-yyyy}");
                 return;
             }
             string[] split = command.Split(" ", 3);
