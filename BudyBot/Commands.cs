@@ -52,22 +52,51 @@ namespace BudyBot
         public static string Slay(DatabaseConnector db)
         {
             // Grab slay count from database
-            int count = 0;
+            int count = db.GetCounter(2).Result;
+            Task.WaitAll(db.IncrementCounter(2));
             return $"budy has danced well for once! budywuSmile budy has danced well {count} times budywuSlay";
+
         }
 
-        public static string Score()
+        public static string Score(DatabaseConnector db)
         {
             // Grab 13k count from database
-            int count = 0;
+            int count = db.GetCounter(1).Result;
+            Task.WaitAll(db.IncrementCounter(1));
             return $"budy got another 13k! budywuSmile Thats {count} so far budywuHot";
         }
 
-        public static string Hair()
+        public static string Hair(DatabaseConnector db)
         {
             // This is a fucking stupid command
             // But its on my NightBot and got used like 3 times so whatever
+            Task.WaitAll(db.IncrementCounter(3));
             return $"hairography king 🗣🔥🔥🔥🔥🔥🔥";
+        }
+
+        public static string Emotes()
+        {
+            return "catJAM Clap dittoDumper dittoQuake KEKW LETSGO Pog pepeDS peepoSHAKE PeepoS peepoHey OMEGALUL POGGERS POGGING ratJAM";
+        }
+
+        public static string JDPlus()
+        {
+            return "https://justdance.fandom.com/wiki/Just_Dance%2B";
+        }
+
+        public static string CurrentChallenge()
+        {
+            return "No challenge currently!";
+        }
+
+        public static string Avatar()
+        {
+            return "main avatar: Morado uploaded by DeviantDerpy; https://vrchat.com/home/avatar/avtr_a6ea63ec-d39f-46ac-a5de-766e03151543";
+        }
+
+        public static string BanList()
+        {
+            return "https://bit.ly/3fMLae8";
         }
     }
 }

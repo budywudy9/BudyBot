@@ -164,5 +164,33 @@ namespace BudyBot
             return (messages[n], times[n]);
         }
 
+        public async Task<int> GetCounter(int id)
+        {
+            int counter = 0;
+            MySqlConnection connection = new MySqlConnection(connectionString);
+            await connection.OpenAsync();
+            string query = $"SELECT counter FROM cmd_counter WHERE id = @id;";
+            await using var command = new MySqlCommand(query, connection);
+            command.Parameters.AddWithValue("@id", id);
+            await using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+                counter = reader.GetInt32("counter");
+            await reader.CloseAsync();
+
+            return counter;
+        }
+
+        public async Task IncrementCounter(int id)
+        {
+            MySqlConnection connection = new MySqlConnection(connectionString);
+            await connection.OpenAsync();
+            string query = $"ALTER TABLE cmd_counter SET counter = counter+1 WHERE id = @id;";
+            await using var command = new MySqlCommand(query, connection);
+            command.Parameters.AddWithValue("@id", id);
+            await command.ExecuteNonQueryAsync();
+
+            return;
+        }
+
     }
 }

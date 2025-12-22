@@ -82,9 +82,19 @@ namespace BudyBot
             else if (msg.Contains("!slay"))
                 client.SendMessage(e.ChatMessage.Channel, Commands.Slay(db));
             else if (msg.Contains("!13k"))
-                client.SendMessage(e.ChatMessage.Channel, Commands.Score());
+                client.SendMessage(e.ChatMessage.Channel, Commands.Score(db));
             else if (msg.Contains("!hairflip"))
-                client.SendMessage(e.ChatMessage.Channel, Commands.Score());
+                client.SendMessage(e.ChatMessage.Channel, Commands.Hair(db));
+            else if (msg.Contains("!emotes"))
+                client.SendMessage(e.ChatMessage.Channel, Commands.Emotes());
+            else if (msg.Contains("!jdplus"))
+                client.SendMessage(e.ChatMessage.Channel, Commands.JDPlus());
+            else if (msg.Contains("rules"))
+                client.SendMessage(e.ChatMessage.Channel, Commands.CurrentChallenge());
+            else if (msg.Contains("!banned"))
+                client.SendMessage(e.ChatMessage.Channel, Commands.BanList());
+            else if (msg.Contains("!avatar"))
+                client.SendMessage(e.ChatMessage.Channel, Commands.Avatar());
             if (msg.Contains("hi im denis"))
                 client.SendMessage(e.ChatMessage.Channel, "didnt fucking ask");
 
