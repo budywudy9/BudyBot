@@ -8,7 +8,7 @@ namespace BudyBot
 {
     internal class Commands
     {
-        public static string Quote(DatabaseConnector db, string cmdUser, string command, string channel, string timestamp)
+        public static string Quote(DatabaseConnector db, string cmdUser, string command, string channel, long timestamp)
         {
             Regex rg = new Regex("@[\\w]{4,25}");
             if (!rg.IsMatch(command))
@@ -47,6 +47,27 @@ namespace BudyBot
             }
 
             return "Unable to execute command. Please try again!";
+        }
+
+        public static string Slay(DatabaseConnector db)
+        {
+            // Grab slay count from database
+            int count = 0;
+            return $"budy has danced well for once! budywuSmile budy has danced well {count} times budywuSlay";
+        }
+
+        public static string Score()
+        {
+            // Grab 13k count from database
+            int count = 0;
+            return $"budy got another 13k! budywuSmile Thats {count} so far budywuHot";
+        }
+
+        public static string Hair()
+        {
+            // This is a fucking stupid command
+            // But its on my NightBot and got used like 3 times so whatever
+            return $"hairography king 🗣🔥🔥🔥🔥🔥🔥";
         }
     }
 }

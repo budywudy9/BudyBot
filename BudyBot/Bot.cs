@@ -76,15 +76,15 @@ namespace BudyBot
             }
             string msg = e.ChatMessage.Message;
 
-            Task.WaitAll(db.IncrementMessages(e.ChatMessage.Username, Int32.Parse(e.ChatMessage.UserId), e.ChatMessage.Message,Int64.Parse(e.ChatMessage.TmiSentTs)));
+            Task.WaitAll(db.IncrementMessages(e.ChatMessage.Username, Int32.Parse(e.ChatMessage.UserId), e.ChatMessage.Message, Int64.Parse(e.ChatMessage.TmiSentTs)));
             if (e.ChatMessage.Message.Contains("!quote"))
-                client.SendMessage(e.ChatMessage.Channel, Commands.Quote(db, e.ChatMessage.Username, e.ChatMessage.Message.Substring(6), e.ChatMessage.Channel, e.ChatMessage.TmiSentTs));
+                client.SendMessage(e.ChatMessage.Channel, Commands.Quote(db, e.ChatMessage.Username, e.ChatMessage.Message.Substring(6), e.ChatMessage.Channel, Int64.Parse(e.ChatMessage.TmiSentTs)));
             else if (msg.Contains("!slay"))
-                Slay();
+                client.SendMessage(e.ChatMessage.Channel, Commands.Slay(db));
             else if (msg.Contains("!13k"))
-                Score();
+                client.SendMessage(e.ChatMessage.Channel, Commands.Score());
             else if (msg.Contains("!hairflip"))
-                Hair();
+                client.SendMessage(e.ChatMessage.Channel, Commands.Score());
             if (msg.Contains("hi im denis"))
                 client.SendMessage(e.ChatMessage.Channel, "didnt fucking ask");
 
@@ -103,22 +103,6 @@ namespace BudyBot
             else
                 client.SendMessage(e.Channel, $"Welcome {e.Subscriber.DisplayName} to the substers! You just earned 500 points!");
         }
-
-        private void Slay()
-        {
-            return;
-        }
-
-        private void Score()
-        {
-            return;
-        }
-
-        private void Hair()
-        {
-            return;
-        }
-
         
     }
 }
